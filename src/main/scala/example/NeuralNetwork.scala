@@ -4,6 +4,8 @@ import botkop.numsca.Tensor
 import botkop.{numsca => np}
 import com.typesafe.scalalogging.LazyLogging
 
+import scala.annotation.tailrec
+
 object NeuralNetwork extends LazyLogging{
 
   def main(args: Array[String]): Unit = {
@@ -16,21 +18,21 @@ object NeuralNetwork extends LazyLogging{
 
     val derivate: Tensor => Tensor = (activation: Tensor) => activation * (1 - activation)
 
-    def activate(weights: List[Tensor], activations: List[Tensor]): List[Tensor] = {
-      if (weights.isEmpty) activations
-      else {
-        val net: Tensor = np.dot(activations.head, weights.head)
+    def activate(weights: List[Tensor], activation: Tensor): List[Tensor] = weights match {
+      case Nil => List(activation)
+      case weight :: weights_tail => {
+        val net: Tensor = np.dot(activation, weight)
         val out = 1 / (1 + np.exp(-net))
-        activate(weights.tail, out :: activations)
+        activate(weights_tail, out) :+ activation
       }
     }
 
-    def backpropagate(reversedWeights: List[Tensor], activations: List[Tensor], deltas: List[Tensor]): List[Tensor] = {
-      if (reversedWeights.length <= 1) deltas
-      else {
-        val error = deltas.head.dot(reversedWeights.head.T)
+    def backpropagate(reversed_weights: List[Tensor], activations: List[Tensor], prev_delta: Tensor): List[Tensor] = reversed_weights match {
+      case weight :: Nil => List(prev_delta)
+      case weight :: reversed_weitghs_tail => {
+        val error = prev_delta.dot(weight.T)
         val delta = error * derivate(activations.head)
-        backpropagate(reversedWeights.tail, activations.tail, delta :: deltas)
+        backpropagate(reversed_weitghs_tail, activations.tail, delta) :+ prev_delta
       }
     }
 
@@ -39,17 +41,17 @@ object NeuralNetwork extends LazyLogging{
     }).toList
 
 
-    def learnEpoch(weights: List[Tensor], dataset: List[(Tensor, Tensor)]): List[Tensor] = {
-      if (dataset.isEmpty) weights
-      else {
-        val (datapoint, target) = dataset.head
+    def learnEpoch(weights: List[Tensor], dataset: List[(Tensor, Tensor)]): List[Tensor] = dataset match {
+      case Nil => weights
+      case (datapoint, target) :: dataset_tail => {
+
         // FEEDFORWARD
-        val activations = activate(weights, List(datapoint))
+        val activations = activate(weights, datapoint)
 
         // BACKPROPAGATION
         val error =  activations.head - target
         val delta = error * derivate(activations.head)
-        val deltas = backpropagate(weights.reverse, activations.tail, List(delta))
+        val deltas = backpropagate(weights.reverse, activations.tail, delta)
 
         // WEIGHT UPDATE
         val updated_weights = (weights zip (activations.reverse zip deltas))
@@ -77,14 +79,11 @@ object NeuralNetwork extends LazyLogging{
 
 
 
-    def learn(weights: List[Tensor], epoch: Int=0): List[Tensor] = {
-
-      logger.info(s"Loss ${calculate_loss(weights)} on epoch ${epoch}")
-
-      if (epoch >= epochs) weights
-      else {
-        val learnedWeights = learnEpoch(weights, dataset)
-        learn(learnedWeights, epoch + 1)
+    def learn(weights: List[Tensor], epoch: Int=0): List[Tensor] = epoch match {
+      case epoch if epoch >= epochs => weights
+      case epoch => {
+        logger.info(s"Loss ${calculate_loss(weights)} on epoch ${epoch}")
+        learn(learnEpoch(weights, dataset), epoch + 1)
       }
     }
 
@@ -102,14 +101,10 @@ object NeuralNetwork extends LazyLogging{
   }
 
 
-  def predict(weights: List[Tensor], prediction: Tensor): Tensor = {
-
-      if(weights.isEmpty) prediction
-      else {
-        val p = 1 /( 1 + np.exp(-np.dot(prediction, weights.head)))
-        predict(weights.tail, p)
-      }
-
+  def predict(weights: List[Tensor], prediction: Tensor): Tensor = weights match {
+    case Nil => prediction
+    case weight :: weights_tail =>
+        predict(weights_tail, 1 /( 1 + np.exp(-np.dot(prediction, weight))))
   }
 
 
