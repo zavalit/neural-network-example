@@ -59,10 +59,10 @@ object TrainXOR extends App with LazyLogging {
   logger.info(s"INPUT WEIGHTS: ${weights}")
   logger.info(s"LEARNED WEIGHTS: ${learnedWeights}")
 
-  logger.info(s"prediction: ${predict(learnedWeights, dataset(0)._1)} dataset: ${dataset(0)}")
-  logger.info(s"prediction: ${predict(learnedWeights, dataset(1)._1)} dataset: ${dataset(1)}")
-  logger.info(s"prediction: ${predict(learnedWeights, dataset(2)._1)} dataset: ${dataset(2)}")
-  logger.info(s"prediction: ${predict(learnedWeights, dataset(3)._1)} dataset: ${dataset(3)}")
+  logger.info(s"input: ${dataset(0)._1} => expected output:${dataset(0)._2},  predicted output: ${predict(learnedWeights, dataset(0)._1)}")
+  logger.info(s"input: ${dataset(1)._1} => expected output:${dataset(1)._2},  predicted output: ${predict(learnedWeights, dataset(1)._1)}")
+  logger.info(s"input: ${dataset(2)._1} => expected output:${dataset(2)._2},  predicted output: ${predict(learnedWeights, dataset(2)._1)}")
+  logger.info(s"input: ${dataset(3)._1} => expected output:${dataset(3)._2},  predicted output: ${predict(learnedWeights, dataset(3)._1)}")
 
 
 }
