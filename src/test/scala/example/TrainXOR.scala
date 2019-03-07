@@ -47,8 +47,9 @@ object TrainXOR extends App with LazyLogging {
   def learn(weights: List[Tensor], epoch: Int=0): List[Tensor] = epoch match {
     case epoch if epoch >= epochs => weights
     case epoch => {
-      logger.info(s"Loss ${loss(weights, biasedTrainSet)} on epoch ${epoch}")
+      if (epoch % 100 == 0) logger.info(s"Loss ${loss(weights, biasedTrainSet)} on epoch ${epoch}")
       learn(learnEpoch(weights, dataset, alpha), epoch + 1)
+
     }
   }
 
