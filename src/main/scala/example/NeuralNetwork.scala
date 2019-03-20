@@ -77,8 +77,8 @@ object NeuralNetwork{
         }
 
         // update weigths by gradient decent
-        val updated_weights = (weights zip (predictions_stack.reverse zip error_deltas)).map {
-          case (weight: Tensor, (activation: Tensor, error_delta: Tensor)) =>
+        val updated_weights = (weights, predictions_stack.reverse, error_deltas).zipped.toList.map {
+          case (weight: Tensor, activation: Tensor, error_delta: Tensor) =>
             // add gradient descent
             weight + -alpha * activation.T.dot(error_delta)
         }
